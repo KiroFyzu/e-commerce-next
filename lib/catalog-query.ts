@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { Product } from "@/lib/catalog-data";
+import type { Product, ProductDetail } from "@/lib/catalog-data";
 
 const NEW_WINDOW_MS = 21 * 24 * 60 * 60 * 1000;
 const SECTION_SIZE = 8;
@@ -91,4 +91,40 @@ export async function getStorefrontCatalog(): Promise<{
   const newArrivals = catalog.slice(0, SECTION_SIZE);
 
   return { catalog, trending, newArrivals };
+}
+
+export async function getProductBySlug(slug: string): Promise<ProductDetail | null> {
+  const product = await prisma.product.findFirst({
+    where: { slug, status: "active" },
+    include: { variants: true },
+  });
+  if (!product) return null;
+
+  return {
+    ...mapProduct(product),
+    description: product.description,
+    brand: product.brand ?? undefined,
+    images: product.images,
+    variants: product.variants.map((v) => ({
+      id: v.id,
+      size: v.size,
+      color: v.color,
+      price: v.price ? Number(v.price) : Number(product.basePrice),
+      stock: v.stock,
+    })),
+  };
+}
+
+export async function getRelatedProducts(
+  category: string,
+  excludeProductId: string,
+  limit = 4
+): Promise<Product[]> {
+  const rawProducts = await prisma.product.findMany({
+    where: { status: "active", category, id: { not: excludeProductId } },
+    include: { variants: true },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+  return rawProducts.map(mapProduct);
 }

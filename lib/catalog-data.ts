@@ -17,6 +17,21 @@ export type Product = {
   stock: number;
 };
 
+export type ProductVariantDetail = {
+  id: string;
+  size: string;
+  color: string;
+  price: number;
+  stock: number;
+};
+
+export type ProductDetail = Product & {
+  description: string;
+  brand?: string;
+  images: string[];
+  variants: ProductVariantDetail[];
+};
+
 export const CATEGORIES: { label: string; value: ProductCategory | "Semua" }[] = [
   { label: "Semua", value: "Semua" },
   { label: "Pria", value: "Pria" },
