@@ -15,6 +15,7 @@ export function ProductDetail({ product }: { product: ProductDetailType }) {
   const [selectedColor, setSelectedColor] = useState(product.colors[0] ?? "");
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   const wishlisted = isWishlisted(product.id);
   const pct = discountPercent(product.price, product.discountPrice);
@@ -25,15 +26,18 @@ export function ProductDetail({ product }: { product: ProductDetailType }) {
   );
 
   const availableStock = selectedVariant ? selectedVariant.stock : product.stock;
-  const canAddToCart = availableStock > 0;
+  const canAddToCart = Boolean(selectedVariant) && availableStock > 0;
 
-  function handleAddToCart() {
-    if (!canAddToCart) return;
-    for (let i = 0; i < quantity; i += 1) {
-      addToCart(product.id);
+  async function handleAddToCart() {
+    if (!selectedVariant) return;
+    setAddError(null);
+    try {
+      await addToCart(selectedVariant.id, quantity);
+      setJustAdded(true);
+      window.setTimeout(() => setJustAdded(false), 1600);
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : "Gagal menambahkan ke keranjang");
     }
-    setJustAdded(true);
-    window.setTimeout(() => setJustAdded(false), 1600);
   }
 
   return (
@@ -184,6 +188,8 @@ export function ProductDetail({ product }: { product: ProductDetailType }) {
               <HeartIcon filled={wishlisted} className={wishlisted ? "h-5 w-5 text-sale" : "h-5 w-5"} />
             </button>
           </div>
+
+          {addError && <p className="mt-2 text-xs text-sale">{addError}</p>}
         </div>
       </div>
     </section>

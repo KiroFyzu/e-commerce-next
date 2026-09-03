@@ -2,18 +2,20 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ProductCategory } from "@/lib/catalog-data";
-
-type CartLine = { productId: string; quantity: number };
+import type { CartLine } from "@/lib/cart-query";
 
 type StoreContextValue = {
   cart: CartLine[];
+  cartLoading: boolean;
   wishlist: string[];
   cartCount: number;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   selectedCategory: ProductCategory | "Semua";
   setSelectedCategory: (value: ProductCategory | "Semua") => void;
-  addToCart: (productId: string) => void;
+  addToCart: (variantId: string, quantity?: number) => Promise<void>;
+  updateCartQuantity: (cartItemId: string, quantity: number) => Promise<void>;
+  removeFromCart: (cartItemId: string) => Promise<void>;
   isWishlisted: (productId: string) => boolean;
   toggleWishlist: (productId: string) => void;
   lastAdded: string | null;
@@ -21,11 +23,19 @@ type StoreContextValue = {
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
-const CART_KEY = "luxe.cart";
 const WISHLIST_KEY = "luxe.wishlist";
+
+async function parseCartResponse(res: Response): Promise<CartLine[]> {
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(body?.error ?? "Gagal memperbarui keranjang");
+  }
+  return body.cart as CartLine[];
+}
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [cartLoading, setCartLoading] = useState(true);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "Semua">("Semua");
@@ -35,23 +45,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     // One-time hydration from localStorage after mount: initial state must stay
     // empty during SSR so the client's first render matches the server's.
     try {
-      const storedCart = localStorage.getItem(CART_KEY);
       const storedWishlist = localStorage.getItem(WISHLIST_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (storedCart) setCart(JSON.parse(storedCart));
       if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
     } catch {
       // ignore malformed local storage
     }
-  }, []);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    } catch {
-      // ignore write failures (private mode, quota, etc.)
-    }
-  }, [cart]);
+    fetch("/api/cart")
+      .then((res) => parseCartResponse(res))
+      .then((lines) => setCart(lines))
+      .catch(() => {})
+      .finally(() => setCartLoading(false));
+  }, []);
 
   useEffect(() => {
     try {
@@ -61,17 +67,31 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, [wishlist]);
 
-  const addToCart = useCallback((productId: string) => {
-    setCart((prev) => {
-      const existing = prev.find((line) => line.productId === productId);
-      if (existing) {
-        return prev.map((line) =>
-          line.productId === productId ? { ...line, quantity: line.quantity + 1 } : line
-        );
-      }
-      return [...prev, { productId, quantity: 1 }];
+  const addToCart = useCallback(async (variantId: string, quantity = 1) => {
+    const res = await fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ variantId, quantity }),
     });
-    setLastAdded(productId);
+    const lines = await parseCartResponse(res);
+    setCart(lines);
+    setLastAdded(variantId);
+  }, []);
+
+  const updateCartQuantity = useCallback(async (cartItemId: string, quantity: number) => {
+    const res = await fetch(`/api/cart/${cartItemId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quantity }),
+    });
+    const lines = await parseCartResponse(res);
+    setCart(lines);
+  }, []);
+
+  const removeFromCart = useCallback(async (cartItemId: string) => {
+    const res = await fetch(`/api/cart/${cartItemId}`, { method: "DELETE" });
+    const lines = await parseCartResponse(res);
+    setCart(lines);
   }, []);
 
   const toggleWishlist = useCallback((productId: string) => {
@@ -87,6 +107,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       cart,
+      cartLoading,
       wishlist,
       cartCount,
       searchQuery,
@@ -94,17 +115,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       selectedCategory,
       setSelectedCategory,
       addToCart,
+      updateCartQuantity,
+      removeFromCart,
       isWishlisted,
       toggleWishlist,
       lastAdded,
     }),
     [
       cart,
+      cartLoading,
       wishlist,
       cartCount,
       searchQuery,
       selectedCategory,
       addToCart,
+      updateCartQuantity,
+      removeFromCart,
       isWishlisted,
       toggleWishlist,
       lastAdded,

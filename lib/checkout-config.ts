@@ -1,0 +1,1 @@
+export const FLAT_SHIPPING_COST = 20000;

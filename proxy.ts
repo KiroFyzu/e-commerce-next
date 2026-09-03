@@ -6,7 +6,7 @@ const PUBLIC_PAGES = ["/login", "/register"];
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
-  if (nextUrl.pathname.startsWith("/api/auth/")) {
+  if (nextUrl.pathname.startsWith("/api/auth/") || nextUrl.pathname.startsWith("/api/webhooks/")) {
     return NextResponse.next();
   }
 

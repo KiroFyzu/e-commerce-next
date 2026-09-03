@@ -58,6 +58,13 @@ function mapProduct(product: RawProduct): Product {
     colors,
     isNew,
     stock: totalStock,
+    variants: product.variants.map((v) => ({
+      id: v.id,
+      size: v.size,
+      color: v.color,
+      price: v.price ? Number(v.price) : Number(product.basePrice),
+      stock: v.stock,
+    })),
   };
 }
 
@@ -105,13 +112,6 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
     description: product.description,
     brand: product.brand ?? undefined,
     images: product.images,
-    variants: product.variants.map((v) => ({
-      id: v.id,
-      size: v.size,
-      color: v.color,
-      price: v.price ? Number(v.price) : Number(product.basePrice),
-      stock: v.stock,
-    })),
   };
 }
 

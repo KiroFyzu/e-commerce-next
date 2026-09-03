@@ -1,5 +1,13 @@
 export type ProductCategory = string;
 
+export type ProductVariantDetail = {
+  id: string;
+  size: string;
+  color: string;
+  price: number;
+  stock: number;
+};
+
 export type Product = {
   id: string;
   slug: string;
@@ -15,21 +23,13 @@ export type Product = {
   isNew?: boolean;
   isTrending?: boolean;
   stock: number;
-};
-
-export type ProductVariantDetail = {
-  id: string;
-  size: string;
-  color: string;
-  price: number;
-  stock: number;
+  variants: ProductVariantDetail[];
 };
 
 export type ProductDetail = Product & {
   description: string;
   brand?: string;
   images: string[];
-  variants: ProductVariantDetail[];
 };
 
 export const CATEGORIES: { label: string; value: ProductCategory | "Semua" }[] = [

@@ -13,11 +13,17 @@ export function ProductCard({ product }: { product: Product }) {
   const [justAdded, setJustAdded] = useState(false);
   const wishlisted = isWishlisted(product.id);
   const pct = discountPercent(product.price, product.discountPrice);
+  const singleVariant = product.variants.length === 1 ? product.variants[0] : null;
 
-  function handleAddToCart() {
-    addToCart(product.id);
-    setJustAdded(true);
-    window.setTimeout(() => setJustAdded(false), 1600);
+  async function handleAddToCart() {
+    if (!singleVariant) return;
+    try {
+      await addToCart(singleVariant.id, 1);
+      setJustAdded(true);
+      window.setTimeout(() => setJustAdded(false), 1600);
+    } catch {
+      // silently ignore; user can retry from the product page
+    }
   }
 
   return (
@@ -51,14 +57,24 @@ export function ProductCard({ product }: { product: Product }) {
         </button>
 
         <div className="absolute inset-x-3 bottom-3 opacity-100 transition-all duration-300 ease-out md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-ink px-3 py-2.5 text-sm font-medium text-white shadow-md transition-colors duration-200 hover:bg-ink-soft cursor-pointer"
-          >
-            <BagIcon className="h-4 w-4" />
-            {justAdded ? "Ditambahkan" : "Tambah ke Keranjang"}
-          </button>
+          {singleVariant ? (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-ink px-3 py-2.5 text-sm font-medium text-white shadow-md transition-colors duration-200 hover:bg-ink-soft cursor-pointer"
+            >
+              <BagIcon className="h-4 w-4" />
+              {justAdded ? "Ditambahkan" : "Tambah ke Keranjang"}
+            </button>
+          ) : (
+            <Link
+              href={`/products/${product.slug}`}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-ink px-3 py-2.5 text-sm font-medium text-white shadow-md transition-colors duration-200 hover:bg-ink-soft"
+            >
+              <BagIcon className="h-4 w-4" />
+              Pilih Ukuran
+            </Link>
+          )}
         </div>
       </div>
 

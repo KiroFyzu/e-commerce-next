@@ -30,6 +30,8 @@ proteksi seluruh route kecuali `/login` & `/register`.
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`: dari
      Settings → API di project Supabase. Dipakai untuk upload gambar produk ke Supabase Storage.
    - `KIPAY_API_KEY`: API key dari dashboard KiPay.
+   - `KIPAY_WEBHOOK_SECRET`: dibuat setelah menambahkan Webhook di dashboard project KiPay, dengan
+     Webhook URL `https://<domain-produksi>/api/webhooks/kipay`.
 
 3. Jalankan migration awal ke database Supabase:
 
@@ -70,9 +72,9 @@ npx prisma migrate dev     # buat & jalankan migration baru
 
 ## Roadmap Berikutnya
 
-- Katalog produk (list, filter, detail, varian ukuran/warna)
-- Cart & checkout (persisted di database)
-- Integrasi KiPay (QRIS) + webhook + polling status
-- Riwayat pesanan
+- [x] Katalog produk (list, filter, detail, varian ukuran/warna)
+- [x] Cart & checkout (persisted di database, per varian)
+- [x] Integrasi KiPay (QRIS) + webhook + polling status
+- [ ] Riwayat pesanan (list semua pesanan milik user)
 - Admin panel (CRUD produk, kelola pesanan)
 - Seed data dummy
