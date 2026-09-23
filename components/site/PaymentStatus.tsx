@@ -61,6 +61,8 @@ export function PaymentStatus({
   const [now, setNow] = useState(() => Date.now());
   const [retrying, setRetrying] = useState(false);
   const [retryError, setRetryError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const isPending = orderStatus === "pending" && transaction?.status === "pending";
 
@@ -109,6 +111,24 @@ export function PaymentStatus({
     }
   }
 
+  async function handleCancel() {
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        setCancelError(body?.error ?? "Gagal membatalkan pesanan");
+        return;
+      }
+      setOrderStatus("cancelled");
+    } catch {
+      setCancelError("Gagal membatalkan pesanan, periksa koneksi kamu");
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   if (orderStatus === "paid" || orderStatus === "processing" || orderStatus === "completed" || orderStatus === "shipped") {
     return (
       <section className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-16 text-center sm:px-6 lg:px-8">
@@ -123,7 +143,20 @@ export function PaymentStatus({
     );
   }
 
-  const expired = orderStatus === "expired" || orderStatus === "cancelled" || transaction?.status === "expired";
+  if (orderStatus === "cancelled") {
+    return (
+      <section className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-16 text-center sm:px-6 lg:px-8">
+        <XCircleIcon className="h-14 w-14 text-muted" />
+        <h1 className="font-serif text-2xl text-ink">Pesanan Dibatalkan</h1>
+        <p className="text-sm text-ink-soft">Pesanan #{orderId.slice(-8).toUpperCase()} telah dibatalkan.</p>
+        <Link href="/" className="mt-2 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-white hover:bg-ink-soft">
+          Kembali Belanja
+        </Link>
+      </section>
+    );
+  }
+
+  const expired = orderStatus === "expired" || transaction?.status === "expired";
 
   if (expired) {
     return (
@@ -162,6 +195,15 @@ export function PaymentStatus({
         >
           {retrying ? "Memproses..." : "Buat Pembayaran"}
         </button>
+        {cancelError && <p className="text-sm text-sale">{cancelError}</p>}
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={cancelling}
+          className="text-sm font-medium text-muted hover:text-sale disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+        >
+          {cancelling ? "Membatalkan..." : "Batalkan Pesanan"}
+        </button>
       </section>
     );
   }
@@ -185,6 +227,16 @@ export function PaymentStatus({
       <p className="text-sm font-medium text-ink-soft">Sisa waktu: {formatCountdown(msRemaining)}</p>
 
       <OrderItemsList items={items} total={total} />
+
+      {cancelError && <p className="text-sm text-sale">{cancelError}</p>}
+      <button
+        type="button"
+        onClick={handleCancel}
+        disabled={cancelling}
+        className="text-sm font-medium text-muted hover:text-sale disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+      >
+        {cancelling ? "Membatalkan..." : "Batalkan Pesanan"}
+      </button>
     </section>
   );
 }

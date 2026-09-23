@@ -8,6 +8,7 @@ type StoreContextValue = {
   cart: CartLine[];
   cartLoading: boolean;
   wishlist: string[];
+  wishlistLoading: boolean;
   cartCount: number;
   searchQuery: string;
   setSearchQuery: (value: string) => void;

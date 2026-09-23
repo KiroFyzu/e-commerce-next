@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
 import { getCartForUser } from "@/lib/cart-query";
+import { getAddressesForUser } from "@/lib/address-query";
 import { StoreProvider } from "@/components/site/StoreProvider";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
@@ -10,7 +11,10 @@ export default async function CheckoutPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const cart = await getCartForUser(session.user.id);
+  const [cart, addresses] = await Promise.all([
+    getCartForUser(session.user.id),
+    getAddressesForUser(session.user.id),
+  ]);
   if (cart.length === 0) redirect("/cart");
 
   async function handleSignOut() {
@@ -28,7 +32,7 @@ export default async function CheckoutPage() {
         />
 
         <main className="flex-1">
-          <CheckoutForm />
+          <CheckoutForm addresses={addresses} />
         </main>
 
         <Footer />

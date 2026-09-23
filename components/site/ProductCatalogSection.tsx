@@ -1,18 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  CATEGORIES,
-  KNOWN_COLOR_SWATCHES,
-  type Product,
-} from "@/lib/catalog-data";
+import { CATEGORIES, getColorHex, type Product } from "@/lib/catalog-data";
 import { ProductCard } from "@/components/site/ProductCard";
 import { useStore } from "@/components/site/StoreProvider";
 import { ChevronDownIcon, FilterIcon, XIcon } from "@/components/icons";
-
-const COLOR_HEX_BY_NAME: Record<string, string> = Object.fromEntries(
-  KNOWN_COLOR_SWATCHES.map((c) => [c.label.toLowerCase(), c.value])
-);
 
 type SortOption = "populer" | "terbaru" | "harga-asc" | "harga-desc" | "rating";
 
@@ -238,7 +230,7 @@ export function ProductCatalogSection({ products }: { products: Product[] }) {
                 <p className="text-xs text-muted">Belum ada data warna.</p>
               )}
               {availableColors.map((color) => {
-                const hex = COLOR_HEX_BY_NAME[color.toLowerCase()];
+                const hex = getColorHex(color);
                 const selected = selectedColors.includes(color);
                 return (
                   <button

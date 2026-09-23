@@ -6,6 +6,7 @@ import { StockIndicator } from "@/components/admin/StockIndicator";
 import { Thumb } from "@/components/admin/Thumb";
 import { VariantStockEditor } from "@/components/admin/VariantStockEditor";
 import { getProductById } from "@/lib/admin/products-query";
+import { getColorHex } from "@/lib/catalog-data";
 import { formatDateTime, formatIDR } from "@/lib/format";
 import { PencilIcon } from "@/components/icons";
 
@@ -121,7 +122,16 @@ export default async function ViewProductPage({
                     {product.variants.map((v) => (
                       <tr key={v.id} className="border-t border-stone-100">
                         <td className="py-2.5">{v.size}</td>
-                        <td className="py-2.5">{v.color}</td>
+                        <td className="py-2.5">
+                          <span className="flex items-center gap-2">
+                            <span
+                              className="h-3 w-3 shrink-0 rounded-full border border-black/10"
+                              style={{ backgroundColor: getColorHex(v.color) }}
+                              aria-hidden="true"
+                            />
+                            {v.color}
+                          </span>
+                        </td>
                         <td className="py-2.5 text-stone-500">{v.sku}</td>
                         <td className="py-2.5 text-stone-600">{v.price ? formatIDR(v.price) : "—"}</td>
                         <td className="py-2.5">

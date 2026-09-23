@@ -131,13 +131,18 @@ export function Navbar({
           </Link>
 
           <div className="hidden items-center gap-2 border-l border-line pl-3 sm:flex">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-line-soft text-ink-soft">
-              <UserIcon className="h-4 w-4" />
-            </span>
-            <div className="leading-tight">
-              <p className="text-xs text-muted">Halo,</p>
-              <p className="max-w-[9rem] truncate text-sm font-medium text-ink">{userName}</p>
-            </div>
+            <Link
+              href="/account"
+              className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 hover:bg-line-soft"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-line-soft text-ink-soft">
+                <UserIcon className="h-4 w-4" />
+              </span>
+              <div className="leading-tight">
+                <p className="text-xs text-muted">Halo,</p>
+                <p className="max-w-[9rem] truncate text-sm font-medium text-ink">{userName}</p>
+              </div>
+            </Link>
             <button
               type="button"
               onClick={onSignOut}
@@ -194,6 +199,15 @@ export function Navbar({
                 </Link>
               </li>
             )}
+            <li>
+              <Link
+                href="/account"
+                onClick={() => setMobileOpen(false)}
+                className="block rounded-lg px-2 py-2.5 text-sm font-medium text-ink-soft hover:bg-line-soft"
+              >
+                Dashboard Saya
+              </Link>
+            </li>
             <li className="mt-1 flex items-center justify-between rounded-lg bg-line-soft px-2 py-2.5">
               <span className="text-sm text-ink-soft">{userName}</span>
               <button

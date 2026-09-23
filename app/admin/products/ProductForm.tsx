@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SerializedProduct } from "@/lib/admin/products-query";
 import { PRODUCT_CATEGORIES, sizeOptionsForCategory } from "@/lib/admin/constants";
+import { KNOWN_COLOR_SWATCHES, getColorHex } from "@/lib/catalog-data";
 import { PlusIcon, TrashIcon, UploadIcon } from "@/components/icons";
 import { Thumb } from "@/components/admin/Thumb";
 
@@ -309,6 +310,12 @@ export function ProductForm({
           </button>
         </div>
 
+        <datalist id="known-color-swatches">
+          {KNOWN_COLOR_SWATCHES.map((c) => (
+            <option key={c.label} value={c.label} />
+          ))}
+        </datalist>
+
         {variants.length === 0 ? (
           <p className="mt-4 rounded-lg border border-dashed border-stone-200 px-4 py-6 text-center text-sm text-stone-400">
             Belum ada varian. Klik &ldquo;Tambah Varian&rdquo; untuk menambahkan ukuran dan warna.
@@ -343,13 +350,21 @@ export function ProductForm({
                       </select>
                     </td>
                     <td className="py-2 pr-3">
-                      <input
-                        value={v.color}
-                        onChange={(e) => updateVariant(i, { color: e.target.value })}
-                        onBlur={() => !v.sku && suggestSku(i)}
-                        placeholder="Hitam"
-                        className="input"
-                      />
+                      <div className="relative">
+                        <span
+                          className="pointer-events-none absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border border-black/10"
+                          style={{ backgroundColor: getColorHex(v.color) }}
+                          aria-hidden="true"
+                        />
+                        <input
+                          value={v.color}
+                          onChange={(e) => updateVariant(i, { color: e.target.value })}
+                          onBlur={() => !v.sku && suggestSku(i)}
+                          placeholder="Hitam"
+                          list="known-color-swatches"
+                          className="input pl-7"
+                        />
+                      </div>
                     </td>
                     <td className="py-2 pr-3">
                       <input

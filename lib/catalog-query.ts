@@ -38,7 +38,7 @@ async function getSoldCountByProductId(): Promise<Map<string, number>> {
   return soldByProduct;
 }
 
-function mapProduct(product: RawProduct): Product {
+function mapProduct(product: RawProduct, soldCount = 0): Product {
   const sizes = Array.from(new Set(product.variants.map((v) => v.size)));
   const colors = Array.from(new Set(product.variants.map((v) => v.color)));
   const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
@@ -53,6 +53,7 @@ function mapProduct(product: RawProduct): Product {
     discountPrice: product.discountPrice ? Number(product.discountPrice) : undefined,
     rating: 0,
     reviewCount: 0,
+    soldCount,
     image: product.images[0] ?? "",
     sizes,
     colors,
@@ -78,7 +79,7 @@ export async function getStorefrontCatalog(): Promise<{
     getSoldCountByProductId(),
   ]);
 
-  const catalog = rawProducts.map(mapProduct);
+  const catalog = rawProducts.map((p) => mapProduct(p, soldByProduct.get(p.id) ?? 0));
 
   const trendingIds = new Set(
     [...rawProducts]
@@ -107,8 +108,10 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
   });
   if (!product) return null;
 
+  const soldByProduct = await getSoldCountByProductId();
+
   return {
-    ...mapProduct(product),
+    ...mapProduct(product, soldByProduct.get(product.id) ?? 0),
     description: product.description,
     brand: product.brand ?? undefined,
     images: product.images,
@@ -120,11 +123,14 @@ export async function getRelatedProducts(
   excludeProductId: string,
   limit = 4
 ): Promise<Product[]> {
-  const rawProducts = await prisma.product.findMany({
-    where: { status: "active", category, id: { not: excludeProductId } },
-    include: { variants: true },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-  });
-  return rawProducts.map(mapProduct);
+  const [rawProducts, soldByProduct] = await Promise.all([
+    prisma.product.findMany({
+      where: { status: "active", category, id: { not: excludeProductId } },
+      include: { variants: true },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    }),
+    getSoldCountByProductId(),
+  ]);
+  return rawProducts.map((p) => mapProduct(p, soldByProduct.get(p.id) ?? 0));
 }

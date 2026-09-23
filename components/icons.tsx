@@ -312,6 +312,25 @@ export function UploadIcon({ className = base }: IconProps) {
   );
 }
 
+export function ShareIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} stroke="currentColor" className={className} aria-hidden="true">
+      <circle cx="18" cy="5" r="2.6" />
+      <circle cx="6" cy="12" r="2.6" />
+      <circle cx="18" cy="19" r="2.6" />
+      <path d="m8.3 10.7 7.4-4.4M8.3 13.3l7.4 4.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function MinusIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} stroke="currentColor" className={className} aria-hidden="true">
+      <path d="M5 12h14" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function SlidersIcon({ className = base }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} stroke="currentColor" className={className} aria-hidden="true">

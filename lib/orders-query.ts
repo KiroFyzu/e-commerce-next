@@ -49,3 +49,38 @@ export async function getOrderWithLiveStatus(
 
   return order;
 }
+
+export type OrderListItem = {
+  id: string;
+  status: OrderWithDetails["status"];
+  total: number;
+  createdAt: string;
+  itemCount: number;
+  preview: string;
+};
+
+export async function getOrdersForUser(userId: string): Promise<OrderListItem[]> {
+  const orders = await prisma.order.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: {
+      items: { include: { productVariant: { include: { product: { select: { name: true } } } } } },
+    },
+  });
+
+  return orders.map((order) => {
+    const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
+    const firstName = order.items[0]?.productVariant.product.name ?? "Produk";
+    const extra = order.items.length - 1;
+
+    return {
+      id: order.id,
+      status: order.status,
+      total: Number(order.total),
+      createdAt: order.createdAt.toISOString(),
+      itemCount,
+      preview: extra > 0 ? `${firstName} +${extra} lainnya` : firstName,
+    };
+  });
+}

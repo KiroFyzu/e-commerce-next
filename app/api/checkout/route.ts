@@ -16,6 +16,8 @@ const shippingAddressSchema = z.object({
 
 const checkoutSchema = z.object({
   shippingAddress: shippingAddressSchema,
+  saveAddress: z.boolean().optional().default(false),
+  addressId: z.string().optional().nullable(),
 });
 
 class CheckoutError extends Error {
@@ -69,6 +71,20 @@ export async function POST(request: Request) {
           shippingAddress: parsed.data.shippingAddress,
         },
       });
+
+      if (parsed.data.saveAddress) {
+        const { name, phone, address, city, postalCode } = parsed.data.shippingAddress;
+        const addressData = { name, phone, address, city, postalCode };
+        const existing = parsed.data.addressId
+          ? await tx.address.findUnique({ where: { id: parsed.data.addressId } })
+          : null;
+
+        if (existing && existing.userId === userId) {
+          await tx.address.update({ where: { id: existing.id }, data: addressData });
+        } else {
+          await tx.address.create({ data: { ...addressData, userId } });
+        }
+      }
 
       for (const { item, price } of lines) {
         const updated = await tx.productVariant.updateMany({
