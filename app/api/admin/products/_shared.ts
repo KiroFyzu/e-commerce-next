@@ -31,7 +31,13 @@ export const productSchema = z.object({
   discountPrice: z.coerce.number().positive().optional().nullable(),
   weightGram: z.coerce.number().int().positive().optional().nullable(),
   status: z.enum(["active", "draft", "inactive", "archived"]).default("draft"),
-  images: z.array(z.string().url("URL gambar tidak valid")).default([]),
+  images: z
+    .array(
+      z
+        .string()
+        .refine((v) => /^https?:\/\//.test(v) || v.startsWith("/"), "URL gambar tidak valid")
+    )
+    .default([]),
   variants: z.array(variantSchema).default([]),
 });
 

@@ -42,6 +42,9 @@ export function ProductForm({
   const [status, setStatus] = useState(initialProduct?.status ?? "draft");
   const [images, setImages] = useState<string[]>(initialProduct?.images ?? []);
   const [imageInput, setImageInput] = useState("");
+  const [imageMethod, setImageMethod] = useState<"url" | "file">("url");
+  const [uploading, setUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [variants, setVariants] = useState<VariantRow[]>(
     initialProduct?.variants.map((v) => ({
       id: v.id,
@@ -66,6 +69,26 @@ export function ProductForm({
 
   function removeImage(index: number) {
     setImages((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleFileUpload(file: File) {
+    setImageError(null);
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setImageError(data?.error ?? "Gagal mengunggah gambar");
+        return;
+      }
+      setImages((prev) => [...prev, data.url]);
+    } catch {
+      setImageError("Gagal mengunggah gambar, periksa koneksi kamu");
+    } finally {
+      setUploading(false);
+    }
   }
 
   function addVariant() {
@@ -245,31 +268,73 @@ export function ProductForm({
       <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
         <h2 className="text-sm font-semibold text-stone-900">Gambar Produk</h2>
         <p className="mt-1 text-xs text-stone-400">
-          Tambahkan URL gambar produk. Gambar pertama akan menjadi thumbnail utama.
+          Tambahkan gambar produk lewat URL atau unggah file. Gambar pertama akan menjadi thumbnail utama.
         </p>
 
-        <div className="mt-4 flex gap-2">
-          <input
-            value={imageInput}
-            onChange={(e) => setImageInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addImage();
-              }
-            }}
-            placeholder="https://..."
-            className="input flex-1"
-          />
+        <div className="mt-4 inline-flex rounded-lg border border-stone-200 p-1 text-sm">
           <button
             type="button"
-            onClick={addImage}
-            className="flex items-center gap-1.5 rounded-lg border border-stone-200 px-3.5 text-sm font-medium text-stone-600 hover:bg-stone-50 cursor-pointer"
+            onClick={() => setImageMethod("url")}
+            className={`rounded-md px-3 py-1.5 font-medium cursor-pointer ${
+              imageMethod === "url" ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-50"
+            }`}
           >
-            <UploadIcon className="h-4 w-4" />
-            Tambah
+            URL
+          </button>
+          <button
+            type="button"
+            onClick={() => setImageMethod("file")}
+            className={`rounded-md px-3 py-1.5 font-medium cursor-pointer ${
+              imageMethod === "file" ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-50"
+            }`}
+          >
+            Upload File
           </button>
         </div>
+
+        {imageMethod === "url" ? (
+          <div className="mt-3 flex gap-2">
+            <input
+              value={imageInput}
+              onChange={(e) => setImageInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addImage();
+                }
+              }}
+              placeholder="https://..."
+              className="input flex-1"
+            />
+            <button
+              type="button"
+              onClick={addImage}
+              className="flex items-center gap-1.5 rounded-lg border border-stone-200 px-3.5 text-sm font-medium text-stone-600 hover:bg-stone-50 cursor-pointer"
+            >
+              <UploadIcon className="h-4 w-4" />
+              Tambah
+            </button>
+          </div>
+        ) : (
+          <div className="mt-3">
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={uploading}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) handleFileUpload(file);
+              }}
+              className="input cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <p className="mt-1.5 text-xs text-stone-400">
+              {uploading ? "Mengunggah..." : "JPG, PNG, WEBP, atau GIF. Maksimal 5MB."}
+            </p>
+          </div>
+        )}
+
+        {imageError && <p className="mt-2 text-sm text-rose-600">{imageError}</p>}
 
         {images.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-3">

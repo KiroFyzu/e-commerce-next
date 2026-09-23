@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# user-uploaded product images (local disk storage)
+/public/uploads/
+
 # IDE / OS
 .vscode/
 .idea/

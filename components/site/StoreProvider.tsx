@@ -38,6 +38,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartLoading, setCartLoading] = useState(true);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [wishlistLoading, setWishlistLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "Semua">("Semua");
   const [lastAdded, setLastAdded] = useState<string | null>(null);
@@ -51,6 +52,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
     } catch {
       // ignore malformed local storage
+    } finally {
+      setWishlistLoading(false);
     }
 
     fetch("/api/cart")
@@ -61,12 +64,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Skip until hydration (above) has applied the stored value to state —
+    // otherwise this fires first with the initial empty array and permanently
+    // overwrites localStorage before the real value is ever read back.
+    if (wishlistLoading) return;
     try {
       localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
     } catch {
       // ignore write failures (private mode, quota, etc.)
     }
-  }, [wishlist]);
+  }, [wishlist, wishlistLoading]);
 
   const addToCart = useCallback(async (variantId: string, quantity = 1) => {
     const res = await fetch("/api/cart", {
@@ -110,6 +117,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       cart,
       cartLoading,
       wishlist,
+      wishlistLoading,
       cartCount,
       searchQuery,
       setSearchQuery,
@@ -126,6 +134,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       cart,
       cartLoading,
       wishlist,
+      wishlistLoading,
       cartCount,
       searchQuery,
       selectedCategory,
