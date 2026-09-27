@@ -13,6 +13,7 @@ import {
 import { useStore } from "@/components/site/StoreProvider";
 import { RatingStars } from "@/components/site/RatingStars";
 import { ProductImage } from "@/components/site/ProductImage";
+import { ImageLightbox } from "@/components/site/ImageLightbox";
 import {
   HeartIcon,
   BagIcon,
@@ -20,6 +21,7 @@ import {
   MinusIcon,
   PlusIcon,
   ChevronRightIcon,
+  SearchIcon,
 } from "@/components/icons";
 
 export function ProductDetail({ product }: { product: ProductDetailType }) {
@@ -27,6 +29,7 @@ export function ProductDetail({ product }: { product: ProductDetailType }) {
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
   const images = product.images.length > 0 ? product.images : [product.image];
   const [activeImage, setActiveImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0] ?? "");
   const [selectedColor, setSelectedColor] = useState(product.colors[0] ?? "");
   const [quantity, setQuantity] = useState(1);
@@ -102,9 +105,17 @@ export function ProductDetail({ product }: { product: ProductDetailType }) {
       <div className="grid gap-8 lg:grid-cols-[minmax(280px,420px)_minmax(0,1fr)_320px]">
         {/* Gallery */}
         <div>
-          <div className="aspect-square w-full overflow-hidden rounded-xl bg-line-soft">
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(true)}
+            aria-label="Perbesar gambar produk"
+            className="group relative aspect-square w-full cursor-zoom-in overflow-hidden rounded-xl bg-line-soft"
+          >
             <ProductImage src={images[activeImage]} alt={product.name} />
-          </div>
+            <span className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm backdrop-blur transition-transform duration-200 group-hover:scale-105">
+              <SearchIcon className="h-4 w-4" />
+            </span>
+          </button>
           {images.length > 1 && (
             <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto">
               {images.map((src, index) => (
@@ -306,6 +317,16 @@ export function ProductDetail({ product }: { product: ProductDetailType }) {
           </div>
         </div>
       </div>
+
+      {lightboxOpen && (
+        <ImageLightbox
+          images={images}
+          alt={product.name}
+          index={activeImage}
+          onIndexChange={setActiveImage}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </section>
   );
 }

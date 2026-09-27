@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { OrderStatusBadge } from "@/components/site/OrderStatusBadge";
 import { prisma } from "@/lib/prisma";
 import { getProductSummary } from "@/lib/admin/products-query";
-import { formatIDR } from "@/lib/format";
+import { getRecentOrders } from "@/lib/admin/orders-query";
+import { formatIDR, formatDateTime } from "@/lib/format";
 import {
   AlertTriangleIcon,
   ClipboardListIcon,
@@ -11,7 +13,7 @@ import {
 } from "@/components/icons";
 
 export default async function AdminDashboardPage() {
-  const [summary, customerCount, orderCount, revenueAgg, lowStockVariants] = await Promise.all([
+  const [summary, customerCount, orderCount, revenueAgg, lowStockVariants, recentOrders] = await Promise.all([
     getProductSummary(),
     prisma.user.count({ where: { role: "user" } }),
     prisma.order.count(),
@@ -25,6 +27,7 @@ export default async function AdminDashboardPage() {
       take: 5,
       include: { product: { select: { name: true, id: true } } },
     }),
+    getRecentOrders(5),
   ]);
 
   const cards = [
@@ -72,6 +75,41 @@ export default async function AdminDashboardPage() {
             </div>
           ))}
         </div>
+
+        <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-stone-900">Pesanan Terbaru</h2>
+            <Link href="/admin/orders" className="text-xs font-medium text-stone-500 hover:text-stone-800">
+              Lihat semua &rarr;
+            </Link>
+          </div>
+          {recentOrders.length === 0 ? (
+            <p className="mt-4 text-sm text-stone-400">Belum ada pesanan dari pelanggan.</p>
+          ) : (
+            <ul className="mt-4 flex flex-col divide-y divide-stone-100">
+              {recentOrders.map((order) => (
+                <li key={order.id}>
+                  <Link
+                    href={`/admin/orders/${order.id}`}
+                    className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm hover:bg-stone-50/70"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-stone-800">
+                        #{order.id.slice(-8).toUpperCase()}{" "}
+                        <span className="font-normal text-stone-400">&middot; {order.customerName}</span>
+                      </p>
+                      <p className="text-xs text-stone-400">{formatDateTime(order.createdAt)}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-stone-800">{formatIDR(order.total)}</span>
+                      <OrderStatusBadge status={order.status} />
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
