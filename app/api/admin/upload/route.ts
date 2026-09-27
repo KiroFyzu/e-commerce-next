@@ -1,8 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { uploadProductImage } from "@/lib/kipay-cdn";
 
 async function requireAdmin() {
   const session = await auth();
@@ -17,8 +16,6 @@ const EXT_BY_MIME: Record<string, string> = {
   "image/webp": "webp",
   "image/gif": "gif",
 };
-
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "products");
 
 export async function POST(request: Request) {
   const session = await requireAdmin();
@@ -45,13 +42,13 @@ export async function POST(request: Request) {
 
   const filename = `${randomUUID()}.${ext}`;
 
+  let url: string;
   try {
-    await mkdir(UPLOAD_DIR, { recursive: true });
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(UPLOAD_DIR, filename), buffer);
+    url = await uploadProductImage(buffer, filename, file.type);
   } catch {
-    return NextResponse.json({ error: "Gagal menyimpan gambar di server" }, { status: 500 });
+    return NextResponse.json({ error: "Gagal mengunggah gambar ke CDN" }, { status: 500 });
   }
 
-  return NextResponse.json({ url: `/uploads/products/${filename}` }, { status: 201 });
+  return NextResponse.json({ url }, { status: 201 });
 }

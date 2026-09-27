@@ -1,7 +1,8 @@
 # E-Commerce Private Catalog (Fashion & Footwear)
 
 Website e-commerce private (wajib login) untuk katalog baju & sepatu. Dibangun dengan Next.js App Router,
-Prisma + Supabase Postgres, NextAuth (Auth.js) credentials, dan KiPay QRIS untuk pembayaran.
+Prisma + Supabase Postgres, NextAuth (Auth.js) credentials, KiPay QRIS untuk pembayaran, dan CDN KiPay
+untuk hosting gambar produk.
 
 ## Status
 
@@ -27,8 +28,10 @@ proteksi seluruh route kecuali `/login` & `/register`.
      — dibutuhkan Prisma untuk migration.
    - `NEXTAUTH_SECRET` / `AUTH_SECRET`: generate dengan `openssl rand -base64 32`.
    - `NEXTAUTH_URL`: URL aplikasi (`http://localhost:3000` untuk lokal).
-   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`: dari
-     Settings → API di project Supabase. Dipakai untuk upload gambar produk ke Supabase Storage.
+   - `KIPAY_CDN_EMAIL` / `KIPAY_CDN_PASSWORD` / `KIPAY_CDN_TOTP_SECRET`: akun CDN KiPay (cdn.kipay.id)
+     yang dipakai server untuk upload gambar produk. `KIPAY_CDN_TOTP_SECRET` didapat sekali dari response
+     `POST /api/auth/register` saat setup akun — dipakai `lib/kipay-cdn.ts` untuk generate kode 2FA
+     otomatis tiap login, tidak perlu app authenticator manual.
    - `KIPAY_API_KEY`: API key dari dashboard KiPay.
    - `KIPAY_WEBHOOK_SECRET`: dibuat setelah menambahkan Webhook di dashboard project KiPay, dengan
      Webhook URL `https://<domain-produksi>/api/webhooks/kipay`.
